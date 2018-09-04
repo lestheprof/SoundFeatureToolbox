@@ -19,12 +19,9 @@ end
 % read targets .csv file
 % can't use csvread as the file has textual values
 f1 = fopen(targets) ;
-% read the whole file(probably Logsheer_Development.csv) into a 1 by 3
-% cell, where the first cell is a cell array of the base type (Effects, for
-% example), the second cell is a cell array the type of sound (Beep, for example) , and
-% the third cell is a cell array containing the file name.
+% read the whole file
 targetinfo = textscan(f1,'%s%s%s', 'Delimiter', {','}) ;
-fclose(f1) ; % close file
+fclose(f1) ;
 
 % process each file, one by one
 for i = 1:nooffiles
