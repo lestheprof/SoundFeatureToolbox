@@ -23,7 +23,7 @@ f1 = fopen(targets) ;
 % cell, where the first cell is a cell array of the base type (Effects, for
 % example), the second cell is a cell array the type of sound (Beep, for example) , and
 % the third cell is a cell array containing the file name.
-targetinfo = textscan(f1,'%s%s%s', 'Delimiter', {','}) ;
+targetinfo = textscan(f1,'%s%s%s', 'Delimiter', {','})  ;
 fclose(f1) ; % close file
 
 % process each file, one by one
