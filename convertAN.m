@@ -1,4 +1,4 @@
-function [datafile_for_ESNEKM] = convertAN(ANdirectory, ANfilelist, targets, deltaT)
+function [datafile_for_ESNEKM] = convertAN(ANdirectory, ANfilelist, targets, targettype, deltaT)
 %convertAN Convert AN data to format for ESNEKN
 %   Read AN file list, and the relevant targets, and convert to a data file
 %   for ESN/EKM
@@ -6,6 +6,16 @@ function [datafile_for_ESNEKM] = convertAN(ANdirectory, ANfilelist, targets, del
 %   deltaT's array each element beiong the number of spikes in that deltaT
 %   Normalisation may be required, to avoid higher frequency bands having
 %   much higher values.
+%
+%   parameters:
+%   ANdirectory: directory containing the AN files
+%   ANfilelist: file containing the list of files to be processed
+%   targets: file containing the .csv file with the informatiojn about the
+%   targets for each audio file
+%   targettype: 1 for class of sound (Effects/Human/Music/Nature/Urban), 2
+%   for acrtual form of sound (more classes)
+%   deltaT: length of time to parcel the spikes into
+% may need another parameter to control how the spikes are re-parcelled.
 
 % read input_filelist to get the list of files to be processed
 inputfid = fopen(ANfilelist) ;
@@ -26,6 +36,14 @@ f1 = fopen(targets) ;
 % the third cell is a cell array containing the file name.
 targetinfo = textscan(f1,'%s%s%s', 'Delimiter', {','})  ;
 fclose(f1) ; % close file
+% identify the targets to use
+if (targettype == 1) % use the first cell to create the targets
+    
+else if (targettype == 2) % use the second cell to create the targets
+        
+    else error(['convertAN: invalid target type = ' num2str(targettype)]) ;
+    end
+end
 
 % process each file, one by one
 for i = 1:nooffiles
