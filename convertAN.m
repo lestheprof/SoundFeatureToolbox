@@ -16,7 +16,7 @@ function [datafile_for_ESNEKM] = convertAN(ANdirectory, ANfilelist, targets, tar
 %   for acrtual form of sound (more classes)
 %   deltaT: length of time to parcel the spikes into
 % may need another parameter to control how the spikes are re-parcelled.
-
+debug = true ;
 % read input_filelist to get the list of files to be processed
 inputfid = fopen(ANfilelist) ;
 fline = fgetl(inputfid) ;
@@ -34,16 +34,19 @@ f1 = fopen(targets) ;
 % cell, where the first cell is a cell array of the base type (Effects, for
 % example), the second cell is a cell array the type of sound (Beep, for example) , and
 % the third cell is a cell array containing the file name.
-targetinfo = textscan(f1,'%s%s%s', 'Delimiter', {','})  ;
+textscan(f1,'%s%s%s', 1, 'Delimiter', {','})  ; % ignore first line (headers)
+targetinfo = textscan(f1,'%s%s%s', 'Delimiter', {','})  ; % read rest of file
 fclose(f1) ; % close file
 % identify the targets to use
 if (targettype == 1) % use the first cell to create the targets
-    
+    targetset = unique(targetinfo{1}) ;
 else if (targettype == 2) % use the second cell to create the targets
-        
+        targetset = unique(targetinfo{2}) ;
     else error(['convertAN: invalid target type = ' num2str(targettype)]) ;
     end
 end
+
+% targetset
 
 % process each file, one by one
 for i = 1:nooffiles
@@ -54,7 +57,12 @@ for i = 1:nooffiles
     % filenameelements{1} has the filename root
     % find where it occurs in the file name list
     idx = find(contains(targetinfo{3}, filenameelements{1})) ; % actual is xxx.wav
-    disp([num2str(idx) ' ' targetinfo{3}{idx}]) ;
+    % find target index (i.e. output value)
+    [~ , tindex] = ismember(targetinfo{targettype}{idx}, targetset)  ;
+    % now calculate values for the input matrix for each channel
+    if debug
+        disp([num2str(idx) ' ' targetinfo{3}{idx} ' target = ' num2str(tindex)]) ;
+    end
  
 end
 
