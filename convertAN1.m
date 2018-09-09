@@ -1,4 +1,4 @@
-function convertAN(ANdirectory, ANfilelist, targets, targettype, deltaT, outputfile)
+function [datafile_for_ESNEKM] = convertAN1(ANdirectory, ANfilelist, targets, targettype, deltaT)
 %convertAN Convert AN data to format for ESNEKN
 %   Read AN file list, and the relevant targets, and convert to a data file
 %   for ESN/EKM
@@ -67,7 +67,7 @@ for i = 1:nooffiles
     if debug
         disp([num2str(idx) ' ' targetinfo{3}{idx} ' target = ' num2str(tindex)]) ;
     end
-    outdatacells{i,2} = num2str(tindex) ; % set target output
+    outdatacells{i}{2} = num2str(tindex) ; % set target output
     % initialise array to hold the input for this target
     n_timesteps = floor((currentAN.AN.datalength/currentAN.AN.Fs) / deltaT) ;
     inputarray = zeros(currentAN.AN.channels, n_timesteps) ;
@@ -92,9 +92,9 @@ for i = 1:nooffiles
         end
         
     end
-    outdatacells{i, 1} = inputarray ;
+    outdatacells{i}{1} = inputarray ;
 end
 % write out the data file
-save(outputfile, 'outdatacells') ;
+
 end
 
