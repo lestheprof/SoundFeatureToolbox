@@ -67,23 +67,23 @@ for i = 1:nooffiles
     if debug
         disp([num2str(idx) ' ' targetinfo{3}{idx} ' target = ' num2str(tindex)]) ;
     end
-    outdatacells{i,2} = num2str(tindex) ; % set target output
+    outdatacells{i,2} = tindex ; % set target output
     % initialise array to hold the input for this target
     n_timesteps = floor((currentAN.AN.datalength/currentAN.AN.Fs) / deltaT) ;
     inputarray = zeros(currentAN.AN.channels, n_timesteps) ;
     % add up spikes in currentAN/ASN.sighnal (1 by currentAN.AN.channels)
     % seem to have to be done channel by channel
     step = deltaT * currentAN.AN.Fs ; % step in samples
-    currenttime = step ;
     
     for chno=1:currentAN.AN.channels % process each channel
+        currenttime = step ;
         currentsignalindex = 1 ; % pointer to where we are in signal
         for currenttimeindex = 1:n_timesteps % create 1 value per timestep
             inputarray(chno,currenttimeindex) = 0 ;
             signaltemp = currentAN.AN.signal{chno} ; % optimised: faster access
             % add up within a single deltaT
-            while ((signaltemp(1, currentsignalindex) < currenttime) ...
-                    && (currentsignalindex < size(signaltemp, 2)))
+            while ( ...
+                    (currentsignalindex < size(signaltemp, 2)) && (signaltemp(1, currentsignalindex) < currenttime))
                 inputarray(chno,currenttimeindex) = inputarray(chno,currenttimeindex) + ...
                     signaltemp(2, currentsignalindex) ; % add up spike values
                 currentsignalindex = currentsignalindex + 1 ;          

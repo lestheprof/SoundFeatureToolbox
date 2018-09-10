@@ -82,8 +82,7 @@ for i = 1:nooffiles
             inputarray(chno,currenttimeindex) = 0 ;
             signaltemp = currentAN.AN.signal{chno} ; % optimised: faster access
             % add up within a single deltaT
-            while ((signaltemp(1, currentsignalindex) < currenttime) ...
-                    && (currentsignalindex < size(signaltemp, 2)))
+            while (  (currentsignalindex < size(signaltemp, 2)) && (signaltemp(1, currentsignalindex) < currenttime))
                 inputarray(chno,currenttimeindex) = inputarray(chno,currenttimeindex) + ...
                     signaltemp(2, currentsignalindex) ; % add up spike values
                 currentsignalindex = currentsignalindex + 1 ;          
