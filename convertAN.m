@@ -1,4 +1,4 @@
-function convertAN(ANdirectory, ANfilelist, targets, targettype, deltaT, outputfile)
+function convertAN(ANdirectory, ANfilelist, targets, targettype, deltaT, outputfile, reparcel)
 %convertAN Convert AN data to format for ESNEKN
 %   Read AN file list, and the relevant targets, and convert to a data file
 %   for ESN/EKM
@@ -15,8 +15,12 @@ function convertAN(ANdirectory, ANfilelist, targets, targettype, deltaT, outputf
 %   targettype: 1 for class of sound (Effects/Human/Music/Nature/Urban), 2
 %   for acrtual form of sound (more classes)
 %   deltaT: length of time to parcel the spikes into
-% may need another parameter to control how the spikes are re-parcelled.
+%   reparcel: 0 none, 1 use CF to adjust all values, 2 as 1, plus talke log
+%  (1+x)of values
+
 debug = true ;
+
+reparcel_const = 1000 ; % used so that values stay in a reasonable range whe re-parcelled
 % read input_filelist to get the list of files to be processed
 inputfid = fopen(ANfilelist) ;
 fline = fgetl(inputfid) ;
@@ -91,9 +95,20 @@ for i = 1:nooffiles
         end
         
     end
+    if (reparcel >= 1)
+        % apply a correction for the Cf of each channel
+        inputarray = inputarray * (reparcel_const/currentAN.AN.cf(chno)) ;
+        if (reparcel == 2)
+            % log-scale the values
+            inputarray = log(1+inputarray) ;
+        end         
+    end
+    
     outdatacells{i, 1} = inputarray ;
+
 end
 % write out the data file
-save(outputfile, 'outdatacells') ;
+AN = currentAN.AN ;
+save(outputfile, 'outdatacells', 'reparcel', 'deltaT', 'AN') ;
 end
 
