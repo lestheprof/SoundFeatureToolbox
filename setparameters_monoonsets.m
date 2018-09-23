@@ -52,7 +52,7 @@ corrparam.repackage = 0.002 ; % for repackaging the logged rectified signal: 1/n
 % parameters for onsets
 % 6 3 2003
 % values for wide onset cell
-onset.spread_wide = 10 ; % number of AN fibers on each side of centre (0->no spread) (was 2)
+onset.spread_wide = 0 ; % number of AN fibers on each side of centre (0->no spread) (was 2)
 onset.k_unity = 1.5 ; %? not used
 onset.onsetcellwt_wide =  10000/(2 * onset.spread_wide + 1) ;
 onset.onsetcellwt_singlewide = 10000/(onset.k_unity*(2 * onset.spread_wide + 1)) ; % ? not used
