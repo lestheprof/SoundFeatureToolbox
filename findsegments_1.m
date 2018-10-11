@@ -59,16 +59,23 @@ bartlettwindow = bartlettwindow/sum(bartlettwindow) ; % normalise to sum of 1
 [bmSig, sig, fs, datalength, cochCFs, delayVector] = ...
     bmsigmono(fname, nFilt, minCochFreq, maxCochFreq, 10, 'gamma', N_erbs) ;
 
-% calculate oosignal for each band
-% initialise oosignal
-oosignal = zeros(size(bmSig)) ;
-for (band = 1:nFilt)
-    % first rectify the band from tne basilar membrane signal, then smooth
-    % it with the bartlett window, then convolve it with the half
-    % difference of Gaussians
-    oosignal(band,:) = conv(conv(abs(bmSig(band,:)),bartlettwindow, 'same'), hdog, 'same') ;
-end
-oosignal_final = sum(oosignal,1) ;
+% % calculate oosignal for each band: the second version gives the same result and is more efficient
+% % initialise oosignal
+% oosignal = zeros(size(bmSig)) ;
+% for (band = 1:nFilt)
+%     % first rectify the band from tne basilar membrane signal, then smooth
+%     % it with the bartlett window, then convolve it with the half
+%     % difference of Gaussians
+%     oosignal(band,:) = conv(conv(abs(bmSig(band,:)),bartlettwindow, 'same'), hdog, 'same') ;
+% end
+% oosignal_final = sum(oosignal,1) ;
+
+% does the order make any difference (shouldn't)
+bmSigRect = abs(bmSig) ;
+bmSigTotRect = sum(bmSigRect,1) ;
+oosignal_final = conv(conv(bmSigTotRect,bartlettwindow, 'same'), hdog, 'same') ;
+
+
 
 % now segment the signal using oosignal_final
 
