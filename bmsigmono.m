@@ -45,7 +45,7 @@ suffix = fname(locn(length(locn))+1: length(fname)) ; % find suffix
 if (size(sig, 2) ~= 1) 
    disp('input sound file is not mono: left (chan1) used') ;
    sig = sig(:,1) ;
-end ;
+end 
 
 % if the sound is longer than duration, read it again, but only for
 % duration this time (necessary, as we don't know the sampling rate to
