@@ -177,7 +177,7 @@ while (peakno  <= length(peaktimes))
         % segment (segno - 1) found
         % backtrack from start of segment to previous zx
         newstartpoint = segstartpeak_sample ;
-        while ((oosignal_final(newstartpoint) > 0) && (newstartpoint > 0))
+        while ((newstartpoint > 0) && (oosignal_final(newstartpoint) > 0))
             newstartpoint = newstartpoint - 1 ;
         end
         % is it within a reasonable time since the peak?
