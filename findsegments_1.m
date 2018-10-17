@@ -22,6 +22,7 @@ smoothlength = 0.01 ; % Bartlett filter parameter length of triangular (bartlett
 threshold = 0.04 ;
 G_quiet = 0.05 ;
 k_minimin = 0.4 ; % not used just yet...
+segStartAdjust = 0.05 ; % allows adjusting back the time of a segment start to ZX before peak
 
 
 i = 1 ;
@@ -52,11 +53,16 @@ while(i<=size(varargin,2))
         case 'k_minmin'
             K_minmin = varargin{i+1};
             i=i+1 ;
+        case 'segstartadjust'
+            segStartAdjust = varargin{i+1};
+            i=i+1 ;
         otherwise
             error('findsegments_1: Unknown argument %s given',varargin{i});
     end
     i=i+1 ;
 end
+segStartAdjustSamnples = segStartAdjust / dtperelement ; % get in samples
+
 % Wholegaussian and smoothing should probably be precomputed if there are many signals to be
 % processed
 wholegaussian = diffofgaussians(sigma1, sigma1 * sigmaratio, nsamples * 2 + 1,dtperelement) ;
@@ -102,11 +108,14 @@ mintimes = minima * dtperelement  ;
 segno = 1 ;
 peakno = 1 ;
 minno = 1 ;
+peakno_1 = peakno ;
 segments = zeros([MAXSEGMENTS, 2]) ;
+segment_finished = false ;
 while (peakno  <= length(peaktimes))
     if (peakvalues(peakno) > threshold)
         % valid peak start
         segments(segno,1) = peaktimes(peakno) ;
+        segstartpeak_sample = peaks(peakno) ; % record for use in later adjustmsegmentent
         while ((minno < length(mintimes)) && (mintimes(minno) <= peaktimes(peakno)))
             minno = minno + 1 ;
         end
@@ -158,11 +167,23 @@ while (peakno  <= length(peaktimes))
                     peakno_1 = peakno_1 + 1 ;
                 end
             end
-
+            
         end
         
     else
         peakno = peakno + 1 ;
+    end
+    if (segment_finished)
+        % segment (segno - 1) found
+        % backtrack from start of segment to previous zx
+        newstartpoint = segstartpeak_sample ;
+        while ((oosignal_final(newstartpoint) > 0) && (newstartpoint > 0))
+            newstartpoint = newstartpoint - 1 ;
+        end
+        % is it within a reasonable time since the peak?
+        if ((segstartpeak_sample - newstartpoint) < segStartAdjustSamnples)
+            segments(segno-1, 1) = (newstartpoint * dtperelement) ;
+        end
     end
 end
 

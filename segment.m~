@@ -1,0 +1,56 @@
+function [numfiles] = segment(filename,segmenttimes)
+% segment: segments a sound file into a number of pieces, using the first
+% dimension of array. Writes the segments to files called
+% filename_seg<i>.au or wav depending on whether the original file was an
+% au or a wav. Returns number of segments written.
+%
+% Note that segment times are in seconds.
+%
+% Written by Dean hunter, modified by LSS June 17 July 2013.
+% rewritten LSS October 2018
+
+%  read file
+[sig,fs] = audioread(filename) ;
+% convert segmenttimes to samples
+segmenttimes = fix(segmenttimes * fs) ;
+
+% check if sound file has a length
+if size(sig) > 0
+    if segmenttimes(1) >= 1
+        numfiles=0; %set default number of output files
+        outputsig=[];    
+    else
+        error(['segment : ',num2str(segmenttimes(:,1)),' ,segment selection is smaller than 1.']);
+    end
+    
+    for i=1:length(segmenttimes,1) % use first index
+        
+        if segmenttimes(i,1) < segmenttimes(i, 2) ||  xor(segmenttimes(i),segmenttimes(i+1))%test segmenttimes element sequence
+            
+                outputsig = sig(segmenttimes(i):segmenttimes(i+1)); % note that endpoints are used twice
+            
+        else
+            error(['Index values : ' num2str(segmenttimes(i)),', ',num2str(segmenttimes(i+1)), ',value is greater than its succeeding index, or smaller than 1 in the input array'] ) ;
+        end
+        switch filetype
+            case 'au'
+                if (bits == 16)
+                    auwrite(outputsig,fs,bits,'linear', strcat(prefix, '_seg',num2str(i),'.au')); %write out each segment
+                else
+                    auwrite(outputsig,fs,bits, strcat(prefix, '_seg',num2str(i),'.au')); %write out each segment
+                end
+            case 'wav'
+                wavwrite(outputsig,fs,bits,strcat(prefix, '_seg' ,num2str(i),'.wav'));
+        end
+        numfiles=numfiles+1; %add one to total files output
+        outputsig=[];%set output back to empty
+    end
+    
+else
+    numfiles = 0 ;  % return 0 if there's no sound in filename
+end
+
+
+
+
+end

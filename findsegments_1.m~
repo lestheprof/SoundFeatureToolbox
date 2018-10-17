@@ -22,6 +22,7 @@ smoothlength = 0.01 ; % Bartlett filter parameter length of triangular (bartlett
 threshold = 0.04 ;
 G_quiet = 0.05 ;
 k_minimin = 0.4 ; % not used just yet...
+segStartAdjust = 0.05 ; % allows adjusting back the time of a segment start to
 
 
 i = 1 ;
@@ -117,47 +118,55 @@ while (peakno  <= length(peaktimes))
         peakno_1 = peakno ;
         minno_1 = minno ;
         while (~segment_finished)
-            while ((peakno_1 <= length(peaktimes)) && (peaktimes(peakno_1) <= segments(segno, 2)) ...
+            while ((peakno_1 < length(peaktimes)) && (peaktimes(peakno_1) <= segments(segno, 2)) ...
                     && (peakvalues(peakno_1) > threshold))
                 peakno_1 = peakno_1 + 1 ; % step forward to start of next segment
             end
             if (peakno_1 > length(peaktimes))
                 % we've hit the end of the sound
-                segments(segno, 2) = mintimes(minno_1 - 1) ;
+                % segments(segno, 2) = mintimes(minno_1 - 1) ;
                 segment_finished = true ;
                 peakno = peakno_1 ;
                 minno = minno_1 ;
                 segno = segno + 1 ;
             else
                 % find segment end
-                while ((minno_1 <= length(mintimes)) && (mintimes(minno_1) <= peaktimes(peakno_1)))
+                while ((minno_1 < length(mintimes)) && (mintimes(minno_1) <= peaktimes(peakno_1)))
                     minno_1 = minno_1 + 1 ;
                 end
-                if ((minno_1 == length(mintimes)) && (mintimes(minno_1) <= segments(segno,1)))
+                if ((minno_1 >= length(mintimes)) && (mintimes(minno_1) <= segments(segno,1)))
                     % invalid segment
+                    disp('findsegments_1: invalid segment') ;
                 else
-                % accept only if time between end of initial segment estimate and
-                % this new start < G_quiet
-                if ((peaktimes(peakno_1) - segments(segno, 2)) <= G_quiet)
-                    segments(segno, 2) = mintimes(minno_1) ;
-                else
-                    segment_finished = true ;
-                    peakno = peakno_1 ;
-                    minno = minno_1 ;
-                    segno = segno + 1 ;
+                    % accept only if time between end of initial segment estimate and
+                    % this new start < G_quiet
+                    if ((peaktimes(peakno_1) - segments(segno, 2)) <= G_quiet)
+                        segments(segno, 2) = mintimes(minno_1) ;
+                    else
+                        segment_finished = true ;
+                        peakno = peakno_1 ;
+                        minno = minno_1 ;
+                        segno = segno + 1 ;
+                    end
+                    if ((peakno_1 > length(peaktimes)) || (minno_1 > length(mintimes)))
+                        % we've hit the end of the sound
+                        segments(segno, 2) = mintimes(minno_1 - 1) ;
+                        segment_finished = true ;
+                        peakno = peakno_1 ;
+                        minno = minno_1 ;
+                        segno = segno + 1 ;
+                    end
+                    peakno_1 = peakno_1 + 1 ;
                 end
-                if ((peakno_1 > length(peaktimes)) || (minno_1 > length(mintimes)))
-                    % we've hit the end of the sound
-                    segments(segno, 2) = mintimes(minno_1 - 1) ;
-                    segment_finished = true ;
-                    peakno = peakno_1 ;
-                    minno = minno_1 ;
-                    segno = segno + 1 ;
-                end
-                peakno_1 = peakno_1 + 1 ;
-                
             end
-
+            % segment (segno - 1) found
+            % backtrack from start of segment to previous zx 
+            startpoint = peaks(peakno_1) ;
+            while (oosignal_final(startpoint) > 0) && startpoiont > 0)
+                startpoint = startpoint - 1 ;
+            end
+            % is it within a reasonable time since the peak?
+            
         end
         
     else
