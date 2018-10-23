@@ -10,17 +10,17 @@ function convertAN(ANdirectory, ANfilelist, targets, targettype, deltaT, outputf
 %   parameters:
 %   ANdirectory: directory containing the AN files
 %   ANfilelist: file containing the list of files to be processed
-%   targets: file containing the .csv file with the informatiojn about the
+%   targets: file containing the .csv file with the information about the
 %   targets for each audio file
 %   targettype: 1 for class of sound (Effects/Human/Music/Nature/Urban), 2
-%   for acrtual form of sound (more classes)
+%   for actual form of sound (more classes)
 %   deltaT: length of time to parcel the spikes into
 %   reparcel: 0 none, 1 use CF to adjust all values, 2 as 1, plus take log(1+x)
 %   of values
 
 debug = true ;
 
-reparcel_const = 1000 ; % used so that values stay in a reasonable range whe re-parcelled
+reparcel_const = 1000 ; % used so that values stay in a reasonable range when re-parcelled
 % read input_filelist to get the list of files to be processed
 inputfid = fopen(ANfilelist) ;
 fline = fgetl(inputfid) ;

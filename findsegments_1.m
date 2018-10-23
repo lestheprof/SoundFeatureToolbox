@@ -77,7 +77,7 @@ bartlettwindow = bartlettwindow/sum(bartlettwindow) ; % normalise to sum of 1
 
 % bandpass the signal
 [bmSig, sig, fs, datalength, cochCFs, delayVector] = ...
-    bmsigmono(fname, nFilt, minCochFreq, maxCochFreq, 10, 'gamma', N_erbs) ;
+    bmsigmono(fname, nFilt, minCochFreq, maxCochFreq, 100, 'gamma', N_erbs) ;
 
 % % calculate oosignal for each band: the second version gives the same result and is more efficient
 % % initialise oosignal
