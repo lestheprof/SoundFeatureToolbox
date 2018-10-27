@@ -31,6 +31,7 @@ while ischar(fline)
     nooffiles = nooffiles + 1 ;
 end
 nooffiles = nooffiles - 1 ;
+fclose(inputfid) ;
 % read targets .csv file
 % can't use csvread as the file has textual values
 f1 = fopen(targets) ;
@@ -109,6 +110,6 @@ for i = 1:nooffiles
 end
 % write out the data file
 AN = currentAN.AN ;
-save(outputfile, 'outdatacells', 'reparcel', 'deltaT', 'AN') ;
+save(outputfile, 'outdatacells', 'reparcel', 'deltaT', 'AN', 'filelist') ;
 end
 

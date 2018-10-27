@@ -25,6 +25,7 @@ threshold = 0.04 ;
 G_quiet = 0.05 ;
 K_minmin = 0.4 ; % not used just yet...
 segStartAdjust = 0.05 ; % allows adjusting back the time of a segment start to ZX before peak
+minseglength = 0 ;
 
 i = 1 ;
 while(i<=size(varargin,2))
@@ -65,6 +66,9 @@ while(i<=size(varargin,2))
         case 'segstartadjust'
             segStartAdjust = varargin{i+1};
             i=i+1 ;
+        case 'minseglength'
+            minseglength = varargin{i+1};
+            i=i+1 ;
         otherwise
             error('findsegments_1: Unknown argument %s given',varargin{i});
     end % switch
@@ -95,7 +99,7 @@ for i = 1:nooffiles
    [segments] = findsegments_1([soundDirectory '/' filelist{i} ],sigma1, sigmaratio, dtperelement, nsamples,...
        'mincochfreq',minCochFreq, 'maxcochfreq', maxCochFreq, 'n_erbs', N_erbs, 'nfilt',  nFilt, ...
        'smoothlength', smoothlength, 'threshold', threshold , 'g_quiet', G_quiet, 'k_minmin', K_minmin, ...
-       'segstartadjust',  segStartAdjust) ;
+       'segstartadjust',  segStartAdjust, 'minseglength', minseglength) ;
    save([outputDirectory '/' filenameroot{1} '_segs.mat'], 'segments') ;
 end % for
 

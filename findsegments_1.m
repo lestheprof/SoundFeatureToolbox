@@ -10,7 +10,7 @@ function [segments] = findsegments_1(fname,sigma1, sigmaratio, dtperelement, nsa
 %   dtperelement: time per sample
 %   nsamples: number of samples in the convolving function
 %   vararegin see below
-debug = true ;
+debug = false ;
 % default values for BPF etc: use varargin to adjust
 minCochFreq = 100 ; % BPF parameters
 maxCochFreq = 5000 ;
@@ -23,6 +23,8 @@ threshold = 0.04 ;
 G_quiet = 0.05 ;
 k_minimin = 0.4 ; % not used just yet...
 segStartAdjust = 0.05 ; % allows adjusting back the time of a segment start to ZX before peak
+%
+minseglength = 0 ; % minimum segment length
 
 
 i = 1 ;
@@ -55,6 +57,9 @@ while(i<=size(varargin,2))
             i=i+1 ;
         case 'segstartadjust'
             segStartAdjust = varargin{i+1};
+            i=i+1 ;
+        case 'minseglength'
+            minseglength = varargin{i+1};
             i=i+1 ;
         otherwise
             error('findsegments_1: Unknown argument %s given',varargin{i});
@@ -100,7 +105,8 @@ oosignal_final = conv(conv(bmSigTotRect,bartlettwindow, 'same'), hdog, 'same') ;
 % now segment the signal using oosignal_final
 % probably good to do this by supplying a function with threshold, G_quiet and K_minmin
 % (see 1994 JNMR paper)
-[peakvalues, peaks]  = findpeaks(oosignal_final) ;
+[peakvalues, peaks]  = findpeaks([0 oosignal_final]) ; % added 0 to allow for starting at high level.
+peaks = peaks - 1 ; % adjust for added 0
 [minvalues, minima] = findpeaks(-oosignal_final) ;
 peaktimes = peaks * dtperelement ; % from samples to seconds
 mintimes = minima * dtperelement  ;
@@ -187,6 +193,42 @@ while (peakno  <= length(peaktimes))
     end
 end
 
-segments = segments(1:segno - 1,:) ;
+allsegments = segments(1:segno - 1,:) ;
+
+if (segno == 1)
+    % no segments found
+    disp(['findsegments_1: ' fname ' no segments found']) ;
+    segments = [] ;
+else
+    % remove segments less that minseglength if one exists.
+    outsegnumber = 1 ;
+    maxseglength = 0 ;
+    if minseglength > 0 % if 0 there's no minimum
+        for insegnumber = 1:segno - 1
+            seglength = (allsegments(insegnumber, 2) - allsegments(insegnumber, 1)) ;
+            % find maximally long segment
+            if (seglength > maxseglength)
+                maxseglength = seglength ;
+                maxsegindex = insegnumber ;
+            end
+            % keep segments greater than maximal length
+            if (allsegments(insegnumber, 2) - allsegments(insegnumber, 1)) > minseglength
+                % keep segment
+                segments(outsegnumber, :) = allsegments(insegnumber, :) ;
+                outsegnumber = outsegnumber + 1 ;
+            end % if
+        end % for
+        if outsegnumber == 1 % no segments are long enough: use the longest actual one:
+            % can use this to keep only longest segment by making minseglength large
+            segments(1,:) = allsegments(maxsegindex,:) ;
+            segments = segments(1,:) ;
+        else
+            segments= segments(1:outsegnumber - 1,:) ;
+        end
+        
+    else % no minimum length
+        segments = allsegments ;
+    end
+end
 end
 
