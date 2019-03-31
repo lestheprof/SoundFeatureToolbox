@@ -8,6 +8,7 @@ function [nFiles] = findsegments_all(soundDirectory,soundFileList, outputDirecto
 
 %parameters for calls to findsegments_1.m default to below values,
 %overwritable using varargin. 
+nullsegments = 0 ; % false ;
 sigma1 = 0.02 ;
 sigmaratio = 1.2 ;
 fs = 44100 ; % adjust if required
@@ -27,9 +28,14 @@ K_minmin = 0.4 ; % not used just yet...
 segStartAdjust = 0.05 ; % allows adjusting back the time of a segment start to ZX before peak
 minseglength = 0 ;
 
+filesuffix = '' ;
+
 i = 1 ;
 while(i<=size(varargin,2))
     switch lower(varargin{i})
+        case 'nullsegments'
+            nullsegments = varargin{i+1};
+            i=i+1 ;
         case 'sigma1'
             sigma1 = varargin{i+1};
             i=i+1 ;
@@ -69,6 +75,9 @@ while(i<=size(varargin,2))
         case 'minseglength'
             minseglength = varargin{i+1};
             i=i+1 ;
+        case 'filesuffix'
+            filesuffix = varargin{i+1};
+            i=i+1 ;
         otherwise
             error('findsegments_1: Unknown argument %s given',varargin{i});
     end % switch
@@ -94,13 +103,21 @@ if (~(exist(outputDirectory, 'dir') == 7))
 end
 % process each file, one by one
 for i = 1:nooffiles
-   filenameroot =  strsplit(filelist{i}, '.') ;
-   % call below needs all varargin parameters set
-   [segments] = findsegments_1([soundDirectory '/' filelist{i} ],sigma1, sigmaratio, dtperelement, nsamples,...
-       'mincochfreq',minCochFreq, 'maxcochfreq', maxCochFreq, 'n_erbs', N_erbs, 'nfilt',  nFilt, ...
-       'smoothlength', smoothlength, 'threshold', threshold , 'g_quiet', G_quiet, 'k_minmin', K_minmin, ...
-       'segstartadjust',  segStartAdjust, 'minseglength', minseglength) ;
-   save([outputDirectory '/' filenameroot{1} '_segs.mat'], 'segments') ;
+    filenameroot =  strsplit(filelist{i}, '.') ;
+    if (nullsegments > 0)
+        % open file
+        [ y, fs] = audioread([soundDirectory '/' filelist{i} ]) ;
+        % find length and creata single segment
+        segments = [(1/fs)  (length(y)/fs)] ;
+    else
+        
+        % call below needs all varargin parameters set
+        [segments] = findsegments_1([soundDirectory '/' filelist{i} ],sigma1, sigmaratio, dtperelement, nsamples,...
+            'mincochfreq',minCochFreq, 'maxcochfreq', maxCochFreq, 'n_erbs', N_erbs, 'nfilt',  nFilt, ...
+            'smoothlength', smoothlength, 'threshold', threshold , 'g_quiet', G_quiet, 'k_minmin', K_minmin, ...
+            'segstartadjust',  segStartAdjust, 'minseglength', minseglength) ;
+    end
+    save([outputDirectory '/' [filenameroot{1} filesuffix] '_segs.mat'], 'segments') ;
 end % for
 
 nFiles = nooffiles ; % return number of files processed
