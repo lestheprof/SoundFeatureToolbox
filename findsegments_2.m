@@ -21,6 +21,9 @@ nFilt = 10 ;
 smoothlength = 0.01 ; % Bartlett filter parameter length of triangular (bartlett) window used to smooth
 %   rectified signal prior to hdog filtering (in seconds)
 % constants for segmentation from oo signal
+
+% do we take log of onset and offset?
+logonset = true ;
 threshold = 0.04 ;
 G_quiet = 0.05 ;
 k_minimin = 0.4 ; % not used just yet...
@@ -31,11 +34,15 @@ minseglength = 0 ; % minimum segment length
 % new parameters for LIF based onset and offset
 onset_diss = 100 ; % dissipation for onset neurons
 onset_rp = 0.05 ; % refractory period for onset cells
-onset_wt = 40.0 ; % onset weight
+onset_wt = 100.0 ; % onset weight
 offset_diss = 100 ; % dissipation for offset neurons
 offset_rp = 0.05 ; % refractory period for onset cells
-offset_wt = 40.0 ; % offset weight
+offset_wt = 100.0 ; % offset weight
 convergence = 4 ; % convergence (no of inputs to each neuron = 2*convergence + 1)
+
+% new parameters for calculating actual segments
+summarysteplength = 0.005 ; % 5ms default
+summaryintegratelength = 0.02; % 20ms default
 
 
 
@@ -62,6 +69,9 @@ while(i<=size(varargin,2))
             i=i+1 ;
         case 'threshold'
             threshold = varargin{i+1};
+            i=i+1 ;
+        case 'logonset'
+            logonset = varargin{i+1};
             i=i+1 ;
         case 'g_quiet'
             G_quiet = varargin{i+1};
@@ -140,7 +150,10 @@ end
 
 onset_signal = abs(max(0,oosignal)) ; % onset signal, positive or 0, 1 per band
 offset_signal = abs(max(0, -oosignal)) ; % offset signal, positive or 0, 1 per band
-
+if logonset % logarithmic adjustment?
+    onset_signal = log(1 + onset_signal) ;
+    offset_signal = log(1 + offset_signal) ;
+end
 % find spikes caused by onset signal:
 % calculate inputs to LIF array (convergence paramater)
 onset_wide = onset_signal ; % initialise
@@ -179,96 +192,27 @@ offset_times = iandfneurons(offset_wide * (offset_wt/(2*convergence + 1)), fs, .
         1, offset_diss, offset_rp, 0); % rrp isn't used
 
 % now segment the signal using the onset and offset spikes.
-
-% probably good to do this by supplying a function with threshold, G_quiet and K_minmin
-% (see 1994 JNMR paper)
-[peakvalues, peaks]  = findpeaks([0 oosignal_final]) ; % added 0 to allow for starting at high level.
-peaks = peaks - 1 ; % adjust for added 0
-[minvalues, minima] = findpeaks(-oosignal_final) ;
-peaktimes = peaks * dtperelement ; % from samples to seconds
-mintimes = minima * dtperelement  ;
-% now segment
-segno = 1 ;
-peakno = 1 ;
-minno = 1 ;
-peakno_1 = peakno ;
-segments = zeros([MAXSEGMENTS, 2]) ;
-segment_finished = false ;
-while (peakno  <= length(peaktimes))
-    if (peakvalues(peakno) > threshold)
-        % valid peak start
-        segments(segno,1) = peaktimes(peakno) ;
-        segstartpeak_sample = peaks(peakno) ; % record for use in later adjustmsegmentent
-        while ((minno < length(mintimes)) && (mintimes(minno) <= peaktimes(peakno)))
-            minno = minno + 1 ;
-        end
-        % mintimes(minno) is 1st estimate of segment end
-        segments(segno, 2) = mintimes(minno) ;
-        % where would next segment start?
-        segment_finished = false ;
-        peakno_1 = peakno ;
-        minno_1 = minno ;
-        while (~segment_finished)
-            while ((peakno_1 < length(peaktimes)) && (peaktimes(peakno_1) <= segments(segno, 2)) ...
-                    && (peakvalues(peakno_1) > threshold))
-                peakno_1 = peakno_1 + 1 ; % step forward to start of next segment
-            end
-            if (peakno_1 > length(peaktimes))
-                % we've hit the end of the sound
-                % segments(segno, 2) = mintimes(minno_1 - 1) ;
-                segment_finished = true ;
-                peakno = peakno_1 ;
-                minno = minno_1 ;
-                segno = segno + 1 ;
-            else
-                % find segment end
-                while ((minno_1 < length(mintimes)) && (mintimes(minno_1) <= peaktimes(peakno_1)))
-                    minno_1 = minno_1 + 1 ;
-                end
-                if ((minno_1 >= length(mintimes)) && (mintimes(minno_1) <= segments(segno,1)))
-                    % invalid segment
-                    disp('findsegments_1: invalid segment') ;
-                else
-                    % accept only if time between end of initial segment estimate and
-                    % this new start < G_quiet
-                    if ((peaktimes(peakno_1) - segments(segno, 2)) <= G_quiet)
-                        segments(segno, 2) = mintimes(minno_1) ;
-                    else
-                        segment_finished = true ;
-                        peakno = peakno_1 ;
-                        minno = minno_1 ;
-                        segno = segno + 1 ;
-                    end
-                    if ((peakno_1 > length(peaktimes)) || (minno_1 > length(mintimes)))
-                        % we've hit the end of the sound
-                        segments(segno, 2) = mintimes(minno_1 - 1) ;
-                        segment_finished = true ;
-                        peakno = peakno_1 ;
-                        minno = minno_1 ;
-                        segno = segno + 1 ;
-                    end
-                    peakno_1 = peakno_1 + 1 ;
-                end
-            end
-            
-        end
-        
-    else
-        peakno = peakno + 1 ;
-    end
-    if (segment_finished)
-        % segment (segno - 1) found
-        % backtrack from start of segment to previous zx
-        newstartpoint = segstartpeak_sample ;
-        while ((newstartpoint > 0) && (oosignal_final(newstartpoint) > 0))
-            newstartpoint = newstartpoint - 1 ;
-        end
-        % is it within a reasonable time since the peak?
-        if ((segstartpeak_sample - newstartpoint) < segStartAdjustSamnples)
-            segments(segno-1, 1) = (newstartpoint * dtperelement) ;
-        end
-    end
+% create summaries of onset and ofset spikes
+% overall length of the signals is datalength * fs
+% use summarysteplength steps for whole length of signal
+% initialise arrays
+onsetsummary = zeros(1, ceil(datalength / (summarysteplength*fs))) ;
+offsetsummary = zeros(1, ceil(datalength / (summarysteplength*fs))) ;
+summarylength = length(onsetsummary) ;
+% fill arrays
+summaryintegratesteps = ceil(summaryintegratelength/summarysteplength) ;
+presum = floor(summaryintegratesteps / 2) ;
+postsum = summaryintegratesteps - presum ; % so pre + post = summaryintegratesteps
+for oi = 1:size(onset_times, 1) % for each onset spike
+    onsetsummary(max(1, ceil(onset_times(oi,2)/summarysteplength) - presum):min(summarylength, ceil(onset_times(oi,2)/summarysteplength) + postsum)) = ...
+       onsetsummary(max(1, ceil(onset_times(oi,2)/summarysteplength) - presum):min(summarylength, ceil(onset_times(oi,2)/summarysteplength) + postsum)) + 1 ;
 end
+for oi = 1:size(offset_times, 1) % for each offset spike
+    offsetsummary(max(1, ceil(offset_times(oi,2)/summarysteplength) - presum):min(summarylength, ceil(offset_times(oi,2)/summarysteplength) + postsum)) = ...
+       offsetsummary(max(1, ceil(offset_times(oi,2)/summarysteplength) - presum):min(summarylength, ceil(offset_times(oi,2)/summarysteplength) + postsum)) + 1 ;
+end
+
+
 
 allsegments = segments(1:segno - 1,:) ;
 

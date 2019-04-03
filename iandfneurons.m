@@ -15,6 +15,11 @@ function spiketimes = iandfneurons(activity, fs, th, diss, rp, rrp)
 % sort out optional parameters
 %
 % tidied up  a bit LSS 2 April 2019.
+%
+% added 3 April 2019: capability for making activity 0 at the *end* of the
+% RP
+resetActivityAtEndRP = true ;
+
 if nargin < 3 
     th = 1; 
 end 
@@ -58,7 +63,12 @@ for tau=1:datalength
       rpentries = find(rpvector) ;
       for j=1:length(rpentries)
          rpvector(rpentries(j)) = rpvector(rpentries(j))- 1 ;
-      end 
+         % also if required maintain activity = 0 during and at end of RP
+      end
+      if resetActivityAtEndRP
+             onsetActivity(rpentries) = 0 ;
+      end
+
    end 
    % does it fire ?
    % first adjust thresholds of those in rrp

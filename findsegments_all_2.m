@@ -28,7 +28,16 @@ K_minmin = 0.4 ; % not used just yet...
 segStartAdjust = 0.05 ; % allows adjusting back the time of a segment start to ZX before peak
 minseglength = 0 ;
 
-filesuffix = '' ;
+% new parameters for LIF based onset and offset
+onset_diss = 100 ; % dissipation for onset neurons
+onset_rp = 0.05 ; % refractory period for onset cells
+onset_wt = 40.0 ; % onset weight
+offset_diss = 100 ; % dissipation for offset neurons
+offset_rp = 0.05 ; % refractory period for onset cells
+offset_wt = 40.0 ; % offset weight
+convergence = 4 ; % convergence (no of inputs to each neuron = 2*convergence + 1)
+
+filesuffix = '' ; % used for identifying this particular run
 
 i = 1 ;
 while(i<=size(varargin,2))
@@ -60,6 +69,9 @@ while(i<=size(varargin,2))
         case 'smoothlength'
             smoothlength = varargin{i+1};
             i=i+1 ;
+        case 'logonset'
+            logonset = varargin{i+1};
+            i=i+1 ;
         case 'threshold'
             threshold = varargin{i+1};
             i=i+1 ;
@@ -78,6 +90,27 @@ while(i<=size(varargin,2))
         case 'filesuffix'
             filesuffix = varargin{i+1};
             i=i+1 ;
+        case 'onset_diss'
+            onset_diss = varargin{i+1};
+            i=i+1 ;
+        case 'onset_rp'
+            onset_rp = varargin{i+1};
+            i=i+1 ;
+        case 'onset_wt'
+            onset_wt  = varargin{i+1};
+            i=i+1 ;
+        case 'offset_diss'
+            offset_diss = varargin{i+1};
+            i=i+1 ;
+        case 'offset_rp'
+            offset_rp = varargin{i+1};
+            i=i+1 ;
+        case 'offset_wt'
+            offset_wt = varargin{i+1};
+            i=i+1 ;
+        case 'convergence'
+            convergence = varargin{i+1};
+            i=i+1 ;
         otherwise
             error('findsegments_1: Unknown argument %s given',varargin{i});
     end % switch
@@ -85,7 +118,7 @@ while(i<=size(varargin,2))
 end %while
 
 % read input_filelist to get the list of files to be processed
-inputfid = fopen(soundFileList) ;
+inputfid = fopen([soundDirectory '/' soundFileList]) ;
 fline = fgetl(inputfid) ;
 nooffiles = 1 ;
 while (ischar(fline) && (length(fline) > 0))
@@ -115,9 +148,31 @@ for i = 1:nooffiles
         [segments] = findsegments_2([soundDirectory '/' filelist{i} ],sigma1, sigmaratio, dtperelement, nsamples,...
             'mincochfreq',minCochFreq, 'maxcochfreq', maxCochFreq, 'n_erbs', N_erbs, 'nfilt',  nFilt, ...
             'smoothlength', smoothlength, 'threshold', threshold , 'g_quiet', G_quiet, 'k_minmin', K_minmin, ...
-            'segstartadjust',  segStartAdjust, 'minseglength', minseglength) ;
+            'segstartadjust',  segStartAdjust, 'minseglength', minseglength, 'onset_diss', onset_diss, ...
+            'onset_rp', onset_rp,'onset_wt', onset_wt,  'offset_diss', offset_diss, 'offset_rp', offset_rp, ...
+            'offset_wt', offset_wt, 'convergence', convergence, 'logonset', logonset) ;
+        % set up params structure for saving
+        params.sigma1 = sigma1 ;
+        params.sigmaratio = sigmaratio ;
+        params.dtperelement = dtperelement ;
+        params.nsamples = nsamples;
+        params.minCochFreq = minCochFreq ;
+        params.maxcochfreq = maxcochfreq ;
+        params.n_erbs = N_erbs ;
+        params.nfilt = nFilt ;
+        params.smoothlength = smoothlength ;
+        params.threshold = threshold ;
+        params.g_quiet = G_quiet ;
+        params.k_minmin = K_minmin ;
+        params.segstartadjust = segStartAdjust ;
+        params.minseglength = minseglength ;
+        params.onset_diss = onset_diss ;
+        params.logonset = logonset ; 
+        params.date = date() ;
+        
+        
     end
-    save([outputDirectory '/' [filenameroot{1} filesuffix] '_segs.mat'], 'segments') ;
+    save([outputDirectory '/' [filenameroot{1} filesuffix] '_segs.mat'], 'segments', 'params') ;
 end % for
 
 nFiles = nooffiles ; % return number of files processed
