@@ -37,6 +37,11 @@ offset_rp = 0.05 ; % refractory period for onset cells
 offset_wt = 40.0 ; % offset weight
 convergence = 4 ; % convergence (no of inputs to each neuron = 2*convergence + 1)
 
+% new parameters for calculating actual segments
+summarysteplength = 0.005 ; % step length used in summarising onset and offset spikes: 5ms default
+summaryintegratelength = 0.02; % width of histogram used in summarising onset and offset spikes: 20ms default
+
+
 filesuffix = '' ; % used for identifying this particular run
 
 i = 1 ;
@@ -111,6 +116,12 @@ while(i<=size(varargin,2))
         case 'convergence'
             convergence = varargin{i+1};
             i=i+1 ;
+        case 'summarysteplength'
+            summarysteplength  = varargin{i+1};
+            i=i+1 ;
+        case 'summaryintegratelength'
+            summaryintegratelength = varargin{i+1};
+            i=i+1 ;
         otherwise
             error('findsegments_1: Unknown argument %s given',varargin{i});
     end % switch
@@ -150,7 +161,8 @@ for i = 1:nooffiles
             'smoothlength', smoothlength, 'threshold', threshold , 'g_quiet', G_quiet, 'k_minmin', K_minmin, ...
             'segstartadjust',  segStartAdjust, 'minseglength', minseglength, 'onset_diss', onset_diss, ...
             'onset_rp', onset_rp,'onset_wt', onset_wt,  'offset_diss', offset_diss, 'offset_rp', offset_rp, ...
-            'offset_wt', offset_wt, 'convergence', convergence, 'logonset', logonset) ;
+            'offset_wt', offset_wt, 'convergence', convergence, 'logonset', logonset, 'summarysteplength', summarysteplength, ...
+            'summaryintegratelength', summaryintegratelength) ;
         % set up params structure for saving
         params.sigma1 = sigma1 ;
         params.sigmaratio = sigmaratio ;
