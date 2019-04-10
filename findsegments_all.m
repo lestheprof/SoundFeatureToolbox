@@ -117,7 +117,23 @@ for i = 1:nooffiles
             'smoothlength', smoothlength, 'threshold', threshold , 'g_quiet', G_quiet, 'k_minmin', K_minmin, ...
             'segstartadjust',  segStartAdjust, 'minseglength', minseglength) ;
     end
-    save([outputDirectory '/' [filenameroot{1} filesuffix] '_segs.mat'], 'segments') ;
+            params.sigma1 = sigma1 ;
+        params.sigmaratio = sigmaratio ;
+        params.dtperelement = dtperelement ;
+        params.nsamples = nsamples;
+        params.minCochFreq = minCochFreq ;
+        params.maxcochfreq = maxCochFreq ;
+        params.n_erbs = N_erbs ;
+        params.nfilt = nFilt ;
+        params.smoothlength = smoothlength ;
+        params.threshold = threshold ;
+        params.g_quiet = G_quiet ;
+        params.k_minmin = K_minmin ;
+        params.segstartadjust = segStartAdjust ;
+        params.minseglength = minseglength ;
+
+        params.date = date() ;
+    save([outputDirectory '/' [filenameroot{1} filesuffix] '_segs.mat'], 'segments', 'params') ;
 end % for
 
 nFiles = nooffiles ; % return number of files processed

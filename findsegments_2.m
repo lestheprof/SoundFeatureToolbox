@@ -43,6 +43,7 @@ convergence = 4 ; % convergence (no of inputs to each neuron = 2*convergence + 1
 % new parameters for calculating actual segments
 summarysteplength = 0.005 ; % step length used in summarising onset and offset spikes: 5ms default
 summaryintegratelength = 0.02; % width of histogram used in summarising onset and offset spikes: 20ms default
+shortestsegment = true ;
 
 
 
@@ -111,6 +112,9 @@ while(i<=size(varargin,2))
             i=i+1 ;
         case 'summaryintegratelength'
             summaryintegratelength = varargin{i+1};
+            i=i+1 ;
+        case 'shortestsegment'
+           shortestsegment  = varargin{i+1};
             i=i+1 ;
         otherwise
             error('findsegments_1: Unknown argument %s given',varargin{i});
@@ -205,6 +209,8 @@ onsetsummary = zeros(1, ceil(datalength / (summarysteplength*fs))) ;
 offsetsummary = zeros(1, ceil(datalength / (summarysteplength*fs))) ;
 summarylength = length(onsetsummary) ;
 % fill arrays
+% for each spike add a vector of length summaryintegratesteps (except when
+% that falls off the end of the summary vector
 summaryintegratesteps = ceil(summaryintegratelength/summarysteplength) ;
 presum = floor(summaryintegratesteps / 2) ;
 postsum = summaryintegratesteps - presum ; % so pre + post = summaryintegratesteps
@@ -216,45 +222,74 @@ for oi = 1:size(offset_times, 1) % for each offset spike
     offsetsummary(max(1, ceil(offset_times(oi,2)/summarysteplength) - presum):min(summarylength, ceil(offset_times(oi,2)/summarysteplength) + postsum)) = ...
        offsetsummary(max(1, ceil(offset_times(oi,2)/summarysteplength) - presum):min(summarylength, ceil(offset_times(oi,2)/summarysteplength) + postsum)) + 1 ;
 end
-
-
-
-allsegments = segments(1:segno - 1,:) ;
-
-if (segno == 1)
+% find candidate onset (segmentstart) and offset (segment end) times
+[startsizes, candidatestarts] = findpeaks(onsetsummary, 1/summarysteplength) ;
+[endsizes, candidateends] = findpeaks(offsetsummary, 1/summarysteplength) ;
+if (isempty(candidatestarts) || isempty(candidateends))
     % no segments found
-    disp(['findsegments_1: ' fname ' no segments found']) ;
+    disp(['findsegments_2: ' fname ' no segments found']) ;
     segments = [] ;
+    return ;
 else
-    % remove segments less that minseglength if one exists.
-    outsegnumber = 1 ;
-    maxseglength = 0 ;
-    if minseglength > 0 % if 0 there's no minimum
-        for insegnumber = 1:segno - 1
-            seglength = (allsegments(insegnumber, 2) - allsegments(insegnumber, 1)) ;
-            % find maximally long segment
-            if (seglength > maxseglength)
-                maxseglength = seglength ;
-                maxsegindex = insegnumber ;
-            end
-            % keep segments greater than maximal length
-            if (allsegments(insegnumber, 2) - allsegments(insegnumber, 1)) > minseglength
-                % keep segment
-                segments(outsegnumber, :) = allsegments(insegnumber, :) ;
-                outsegnumber = outsegnumber + 1 ;
-            end % if
-        end % for
-        if outsegnumber == 1 % no segments are long enough: use the longest actual one:
-            % can use this to keep only longest segment by making minseglength large
-            segments(1,:) = allsegments(maxsegindex,:) ;
-            segments = segments(1,:) ;
-        else
-            segments= segments(1:outsegnumber - 1,:) ;
+    % preassign segments
+    segments = zeros(length(candidatestarts), 2) ;
+    segmentno = 0 ;
+    startno = 1 ;
+    endno = 1 ;
+    while startno <= length(candidatestarts)
+        % find a candidate end for this segment
+        while (endno <= length(candidateends)) && ((candidateends(endno) - candidatestarts(startno)) < minseglength)
+            endno = endno + 1 ;
         end
-        
-    else % no minimum length
-        segments = allsegments ;
+        if (endno <= length(candidateends))
+            % we have a segment
+            segmentno = segmentno + 1;
+            segments(segmentno, 1) =  candidatestarts(startno);
+            if shortestsegment %  takes first possible end of segment
+                % we could look to see if there are further possible segment
+                % ends before the next proposed segment start
+                segments(segmentno, 2) = candidateends(endno) ;
+                startno = startno + 1 ;
+                endno = endno + 1 ;
+            else % latest possible end for segment
+                % increment startno to next start after current proposed
+                % end of segment, candidateends(endno)
+                tempnextstart = startno ;
+                while (tempnextstart <= length(candidatestarts)) && (candidatestarts(tempnextstart) < candidateends(endno))
+                    tempnextstart = tempnextstart + 1 ;
+                end
+                if (tempnextstart <= length(candidatestarts))
+                    lastpossibleend = candidatestarts(tempnextstart) ;
+                else
+                    lastpossibleend = +inf ;
+                end
+                while (endno <= length(candidateends)) && (candidateends(endno) < lastpossibleend)
+                    endno = endno + 1 ;
+                end
+                endno = endno - 1 ; % step 1 back
+                segments(segmentno, 2) = candidateends(endno) ;
+                startno = startno + 1 ;
+                endno = endno + 1 ;
+            end
+        else
+            % we've hit the end of the candidate ends: no more
+            % segments
+            startno = startno + 1 ;
+            break ;
+        end
+        if (startno > length(candidatestarts)) 
+            break ;
+        end
+        while ((startno < length(candidatestarts)) && candidatestarts(startno) < segments(segmentno, 2))
+            startno = startno + 1 ; % jumpo forward so that next segment starts after last one ends
+        end
     end
+    
 end
+
+
+segments = segments(1:segmentno, :) ; % truncate array
+
+
 end
 

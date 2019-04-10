@@ -5,6 +5,7 @@ function [nFiles] = findsegments_all_2(soundDirectory,soundFileList, outputDirec
 %   output segments in outputDirectory/<filename>.segs one for each file
 %
 % LSS 24 OCTOBER 2018 
+% updated april 2019
 
 %parameters for calls to findsegments_1.m default to below values,
 %overwritable using varargin. 
@@ -36,10 +37,12 @@ offset_diss = 100 ; % dissipation for offset neurons
 offset_rp = 0.05 ; % refractory period for onset cells
 offset_wt = 40.0 ; % offset weight
 convergence = 4 ; % convergence (no of inputs to each neuron = 2*convergence + 1)
+logonset = false ; % default ius niot to take logs of onset signals
 
 % new parameters for calculating actual segments
 summarysteplength = 0.005 ; % step length used in summarising onset and offset spikes: 5ms default
 summaryintegratelength = 0.02; % width of histogram used in summarising onset and offset spikes: 20ms default
+shortestsegment = false ; % used to enable earlier or later candidate offset (segment end) times to be used
 
 
 filesuffix = '' ; % used for identifying this particular run
@@ -122,6 +125,9 @@ while(i<=size(varargin,2))
         case 'summaryintegratelength'
             summaryintegratelength = varargin{i+1};
             i=i+1 ;
+        case 'shortestsegment'
+            shortestsegment = varargin{i+1};
+            i=i+1 ;
         otherwise
             error('findsegments_1: Unknown argument %s given',varargin{i});
     end % switch
@@ -162,14 +168,14 @@ for i = 1:nooffiles
             'segstartadjust',  segStartAdjust, 'minseglength', minseglength, 'onset_diss', onset_diss, ...
             'onset_rp', onset_rp,'onset_wt', onset_wt,  'offset_diss', offset_diss, 'offset_rp', offset_rp, ...
             'offset_wt', offset_wt, 'convergence', convergence, 'logonset', logonset, 'summarysteplength', summarysteplength, ...
-            'summaryintegratelength', summaryintegratelength) ;
+            'summaryintegratelength', summaryintegratelength, 'shortestsegment', shortestsegment) ;
         % set up params structure for saving
         params.sigma1 = sigma1 ;
         params.sigmaratio = sigmaratio ;
         params.dtperelement = dtperelement ;
         params.nsamples = nsamples;
         params.minCochFreq = minCochFreq ;
-        params.maxcochfreq = maxcochfreq ;
+        params.maxcochfreq = maxCochFreq ;
         params.n_erbs = N_erbs ;
         params.nfilt = nFilt ;
         params.smoothlength = smoothlength ;
@@ -180,6 +186,7 @@ for i = 1:nooffiles
         params.minseglength = minseglength ;
         params.onset_diss = onset_diss ;
         params.logonset = logonset ; 
+        params.shortestsegment = shortestsegment ;
         params.date = date() ;
         
         
