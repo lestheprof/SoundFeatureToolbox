@@ -1,5 +1,5 @@
 function segments = run_multiplesegmentations_2(sd, filelist, nfilters)
-% run_multiplesegmentations: LSS March 2019 
+% run_multiplesegmentations_2: LSS March 2019 
 % l.s.smith@cs.stir.ac.uk
 %
 % function to run through segmenting a single file (1st in the list at
@@ -28,7 +28,7 @@ function segments = run_multiplesegmentations_2(sd, filelist, nfilters)
 
 for nf = 1:nfilters
     s1 = findsegments_all_2(sd, [sd '/' filelist], sd, 'nfilt', nf, 'filesuffix', num2str(nf), 'minseglength', 0.1, 'sigmaratio', 1.1 ,...
-        'onset_wt' ,250, 'offset_wt', 250, 'convergence', 6, 'logonset', true) ;
+        'onset_wt' ,150, 'offset_wt', 150, 'convergence', 6, 'logonset', true) ;
 end
 if ~(s1 == 1)
     disp(['This version expects only one file to be processed: number of files = ' num2str(s1) ' only 1st file processed']) ;

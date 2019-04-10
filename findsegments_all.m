@@ -117,7 +117,7 @@ for i = 1:nooffiles
             'smoothlength', smoothlength, 'threshold', threshold , 'g_quiet', G_quiet, 'k_minmin', K_minmin, ...
             'segstartadjust',  segStartAdjust, 'minseglength', minseglength) ;
     end
-            params.sigma1 = sigma1 ;
+        params.sigma1 = sigma1 ;
         params.sigmaratio = sigmaratio ;
         params.dtperelement = dtperelement ;
         params.nsamples = nsamples;

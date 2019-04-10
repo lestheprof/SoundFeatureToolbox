@@ -194,9 +194,11 @@ for i = 1:nooffiles
         params.comvergence = convergence ;
         params.logonset = logonset ;
         params.summarysteplength = summarysteplength ;
-        params.summaryintegratelength = summaryintegratelength ;
+        
         params.shortestsegment = shortestsegment ;
-        params.date = date() ;   
+        params.date = date() ;
+        
+        
     end
     save([outputDirectory '/' [filenameroot{1} filesuffix] '_segs.mat'], 'segments', 'params') ;
 end % for
