@@ -7,7 +7,7 @@ param.num_levels = 10; %number of sensitivity levels
 % Filterbank parameters:
 param.f_low = 50; %lowest central frequency
 param.f_high = 6500; %highest central frequency
-param.n_channels = 200 ;; %number of filter channels
+param.n_channels = 200 ; %number of filter channels
 param.cf = MakeErbCFs(param.f_low,param.f_high,param.n_channels);
 % Please uncomment the following line and comment the previous one if you
 % have different central frequencies than those calculated by the

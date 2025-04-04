@@ -34,7 +34,7 @@ end
 if exist([paramfilelocation  experimentname  dirname '/' 'parameters_monoonset.mat'], ...
         'file')
     % read the file
-    load([paramfilelocation  experimentname  dirname  '/' 'parameters_monoonset.mat']) ;
+    load([paramfilelocation  experimentname  dirname  '/' 'parameters_monoonset.mat'], "AN") ;
     soundlength = AN.soundlength ;
     siglevel = AN.siglevel ;
     fmin = AN.fmin ;
@@ -100,8 +100,8 @@ for j=1:noofexperiments % for each sound file
             'bmSig', 'sig', 'fs', 'datalength', 'cochCFs', 'delayVector') ;
     end
     if (store_bmSig == 2)
-        % load the bmSig matrix from the file
-        load([stimulibasedir  experimentname  dirname '/' bmSigdir '/' filestem '_bmSig'],'-mat' ) ;
+        % load the bmSig matrix from the file (modified LSS April 2 2025)
+        load([stimulibasedir  experimentname  dirname '/' bmSigdir '/' filestem '_bmSig'],'-mat', "bmSig" ) ;
         % shrink bmSig if required (let the specified soundlength over-ride 
         % the data lengtyh in the loaded bmSig 
         bmSig = squeeze(bmSig) ; % added in case stored version is 1 by N by length
